@@ -1,0 +1,67 @@
+#include <LiquidCrystal.h>
+#include <Servo.h>
+
+LiquidCrystal lcd(12, 11, 5, 4, 3, 2);
+Servo myservo;
+
+const int trigPin = 9;
+const int echoPin = 10;
+const int servoPin = 6;
+const int buzzerPin = 7;
+
+int servoPos = 0;
+int servoIncrement = 1;
+int servoDelay = 15;
+
+void setup() {
+  lcd.begin(16, 2);
+  pinMode(trigPin, OUTPUT);
+  pinMode(echoPin, INPUT);
+  myservo.attach(servoPin);
+  pinMode(buzzerPin, OUTPUT);
+  noTone(buzzerPin); // Ensure buzzer is initially off
+
+  lcd.setCursor(0, 0);
+  lcd.print("Radar System");
+  lcd.setCursor(0, 1);
+  lcd.print("Initializing...");
+  delay(2000);
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print("Distance:");
+}
+
+void loop() {
+  digitalWrite(trigPin, LOW);
+  delayMicroseconds(2);
+  digitalWrite(trigPin, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(trigPin, LOW);
+
+  long duration = pulseIn(echoPin, HIGH, 10000);
+  int distance = duration * 0.034 / 2;
+
+  lcd.setCursor(10, 1); // Set cursor to the second line
+
+  if (distance <= 10 && distance != 0) {
+    lcd.print("        "); // Clear previous value
+    lcd.setCursor(10, 1);
+    lcd.print(distance);
+    lcd.print(" cm");
+    tone(buzzerPin, 1000); // Turn on the buzzer at 1000 Hz
+  } else {
+    lcd.print("               "); // Clear previous value
+    lcd.setCursor(10, 1);
+    lcd.print(distance == 0 ? "0 cm" : "Out Range");
+    noTone(buzzerPin); // Turn off the buzzer
+  }
+
+  myservo.write(servoPos);
+  servoPos += servoIncrement;
+
+  if (servoPos <= 0 || servoPos >= 180) {
+    servoIncrement *= -1;
+  }
+
+  delay(servoDelay);
+}
